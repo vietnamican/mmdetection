@@ -2,11 +2,14 @@
 dataset_type = 'PhoneDataset'
 ir_data_root = '/home/ubuntu/tienpv/datasets/ourDB/images/'
 ir_ann_files = '/home/ubuntu/tienpv/datasets/ourDB/labels.txt'
+ir_negative_data_root = '/home/ubuntu/tienpv/datasets/HonTre_NegativeSample/'
+ir_negative_ann_files = '/home/ubuntu/tienpv/datasets/HonTre_NegativeSample/train.txt'
 rgb_data_root = '/home/ubuntu/tienpv/datasets/PhoneDatasets/'
 rgb_ann_files = '/home/ubuntu/tienpv/datasets/PhoneDatasets/OIDV6/PhoneV6/train.txt'
 gray_data_root = '/home/ubuntu/tienpv/datasets/PhoneDatasets/'
 gray_ann_files = '/home/ubuntu/tienpv/datasets/PhoneDatasets/OIDV6/PhoneV6/train.txt'
 img_norm_cfg = dict(mean=[123.675, 116.28, 103.53], std=[1, 1, 1], to_rgb=True)
+
 train_pipeline = [
     dict(type='LoadImageFromFile', to_float32=True),
     dict(type='LoadAnnotations', with_bbox=True),
@@ -75,12 +78,24 @@ test_pipeline = [
 ir_dataset_train = dict(
     type='RepeatDataset',
     times=2,
-    dataset=dict(
-        type=dataset_type,
-        ann_file=ir_ann_files,
-        img_prefix=ir_data_root,
-        pipeline=train_pipeline
+    dataset = dict(
+        type='ConcatDataset',
+        datasets = [
+            dict(
+                type=dataset_type,
+                ann_file=ir_ann_files,
+                img_prefix=ir_data_root,
+                pipeline=train_pipeline
+            ),
+            dict(
+                type=dataset_type,
+                ann_file=ir_negative_ann_files,
+                img_prefix=ir_negative_data_root,
+                pipeline=train_pipeline
+            )
+        ]
     )
+    
 )
 
 rgb_dataset_train = dict(
@@ -93,6 +108,7 @@ rgb_dataset_train = dict(
         pipeline=train_pipeline
     )
 )
+
 gray_dataset_train = dict(
     type='RepeatDataset',
     times=2,
@@ -108,6 +124,7 @@ data = dict(
     samples_per_gpu=60,
     workers_per_gpu=4,
     train=[ir_dataset_train, rgb_dataset_train, ir_dataset_train, gray_dataset_train],
+    # train=ir_dataset_train,
     val=dict(
         type=dataset_type,
         ann_file=ir_ann_files,

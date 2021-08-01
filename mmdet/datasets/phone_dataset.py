@@ -39,6 +39,9 @@ class PhoneDataset(CustomDataset):
                 if isFirst:
                     isFirst = False
                 else:
+                    if len(previous_bboxes) == 0:
+                        previous_bboxes = np.zeros((0, 4))
+                        previous_labels = np.zeros(0)
                     data_infos.append(
                         dict(
                             filename=previous_path,
@@ -50,8 +53,8 @@ class PhoneDataset(CustomDataset):
                             )
                         )
                     )
-                    previous_bboxes.clear()
-                    previous_labels.clear()
+                    previous_bboxes = []
+                    previous_labels = []
             else:
                 line = line.split(' ')
                 bbox = [float(x) for x in line]
@@ -62,6 +65,9 @@ class PhoneDataset(CustomDataset):
                 previous_labels.append(0)
         
         previous_path = path
+        if len(previous_bboxes) == 0:
+            previous_bboxes = np.zeros((0, 4))
+            previous_labels = np.zeros(0)
         data_infos.append(
             dict(
                 filename=previous_path,
