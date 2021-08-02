@@ -11,11 +11,11 @@ def makesure_dir_is_exist(path):
         os.makedirs(dirname)
 
 config_file = '/home/ubuntu/tienpv/mmdetection/configs/retinanet/phone_r18_fpn_1x_coco.py'
-checkpoint_file = '/vinai/khaidq3/logs/mmdetection/resnet18_negative/epoch_200.pth'
+checkpoint_file = '/vinai/khaidq3/logs/mmdetection/resnet18_copy_and_paste_logs/epoch_200.pth'
 model = init_detector(config_file, checkpoint_file, device='cuda:0')
 
 video_dir = '/home/ubuntu/tienpv/datasets/DMS_PnL/'
-out_dir = '/home/ubuntu/tienpv/datasets/DMS_PnL_negative_retina_mmdetection_resnet18/'
+out_dir = '/home/ubuntu/tienpv/datasets/DMS_PnL_copy_and_paste_retina_mmdetection_resnet18/'
 # video_dir = '/home/ubuntu/tienpv/datasets/new_video/'
 # out_dir = '/home/ubuntu/tienpv/datasets/new_video_retina_mmdetection/'
 video_paths = glob.glob(video_dir+"*.mp4")

@@ -6,6 +6,7 @@ import pycocotools.mask as maskUtils
 
 from mmdet.core import BitmapMasks, PolygonMasks
 from ..builder import PIPELINES
+from ..common import load_annotations
 
 try:
     from panopticapi.utils import rgb2id
@@ -563,3 +564,111 @@ class FilterAnnotations:
                 if key in results:
                     results[key] = results[key][keep]
             return results
+
+def is_apply_copy_and_paste():
+    return np.random.rand() < 0.5
+
+def choose_randomly_index(upper_bound):
+    return np.random.randint(upper_bound)
+
+def is_empty_gt(sample):
+    return sample['ann']['bboxes'].shape[0] == 0
+
+@PIPELINES.register_module()
+class LoadImageFromFileSafer:
+
+    def __init__(self,
+                 to_float32=False,
+                 color_type='color',
+                 file_client_args=dict(backend='disk'),
+                 img_dirs=None,
+                 ann_files=None):
+        self.to_float32 = to_float32
+        self.color_type = color_type
+        self.file_client_args = file_client_args.copy()
+        self.file_client = None
+        self.data_infos = load_annotations(img_dirs, ann_files)
+        self.__length__ = len(self.data_infos)
+
+    def __load_image_name__(self, results):
+        if results['img_prefix'] is not None:
+            filename = osp.join(results['img_prefix'],
+                                results['img_info']['filename'])
+        else:
+            filename = results['img_info']['filename']
+        return filename
+
+    def __load_image__(self, filename):
+        img_bytes = self.file_client.get(filename)
+        img = mmcv.imfrombytes(img_bytes, flag=self.color_type)
+        if self.to_float32:
+            img = img.astype(np.float32)
+        return img
+
+    def __is_empty_gt__(self, results):
+        return results['ann_info']['bboxes'].shape[0] == 0
+
+    def copy_and_paste(self, target, source):
+        filename = self.__load_image_name__(target)
+        img = self.__load_image__(filename)
+
+        if target['img_prefix'] is not None:
+            source_filename = osp.join(source['img_dir'],
+                                source['filename'])
+        else:
+            source_filename = source['filename']
+        source_img = self.__load_image__(source_filename)
+
+        bboxes = source['ann']['bboxes']
+        labels = source['ann']['labels']
+        for bbox in bboxes:
+            left, top, width, height = bbox
+            right, bottom = left + width, top + height
+            left, top, right, bottom = int(left), int(top), int(right), int(bottom)
+            img[top:bottom+1, left:right+1] = source_img[top:bottom+1, left:right+1]
+        
+        target['filename'] = filename
+        target['ori_filename'] = target['img_info']['filename']
+        target['img'] = img
+        target['img_shape'] = img.shape
+        target['ori_shape'] = img.shape
+        target['img_fields'] = ['img']
+        target['ann_info']['bboxes'] = bboxes
+        target['ann_info']['labels'] = labels
+
+    def __call__(self, results):
+
+        if self.file_client is None:
+            self.file_client = mmcv.FileClient(**self.file_client_args)
+
+
+        filename = self.__load_image_name__(results)
+        img = self.__load_image__(filename)
+        is_copied_and_pasted = False
+        if self.__is_empty_gt__(results):
+            if is_apply_copy_and_paste():
+                is_copied_and_pasted = True
+                index = -1
+                while True:
+                    index = choose_randomly_index(self.__length__)
+                    if not is_empty_gt(self.data_infos[index]):
+                        break
+                orig_image = img.copy()
+                self.copy_and_paste(results, self.data_infos[index])
+                post_image = results['img']
+        if not is_copied_and_pasted:
+            results['filename'] = filename
+            results['ori_filename'] = results['img_info']['filename']
+            results['img'] = img
+            results['img_shape'] = img.shape
+            results['ori_shape'] = img.shape
+            results['img_fields'] = ['img']
+        
+        return results
+
+    def __repr__(self):
+        repr_str = (f'{self.__class__.__name__}('
+                    f'to_float32={self.to_float32}, '
+                    f"color_type='{self.color_type}', "
+                    f'file_client_args={self.file_client_args})')
+        return repr_str
