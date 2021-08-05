@@ -102,7 +102,7 @@ test_pipeline = [
 
 ir_dataset_train = dict(
     type='RepeatDataset',
-    times=2,
+    times=4,
     dataset = dict(
         type='ConcatDataset',
         datasets = [
@@ -145,8 +145,8 @@ gray_dataset_train = dict(
 )
 
 data = dict(
-    samples_per_gpu=60,
-    workers_per_gpu=4,
+    samples_per_gpu=128,
+    workers_per_gpu=8,
     train=[ir_dataset_train, rgb_dataset_train, ir_dataset_train, gray_dataset_train],
     # train=ir_dataset_train,
     val=dict(
