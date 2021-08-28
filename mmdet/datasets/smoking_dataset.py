@@ -6,8 +6,8 @@ from .custom import CustomDataset
 
 
 @DATASETS.register_module()
-class PhoneDataset(CustomDataset):
-    CLASSES = ('phone', )
+class SmokingDataset(CustomDataset):
+    CLASSES = ('smoking', )
 
     def load_annotations(self, ann_file):
         data_infos = []

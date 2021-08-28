@@ -19,7 +19,7 @@ model = dict(
         use_dcn=True),
     bbox_head=dict(
         type='CenterNetHead',
-        num_classes=80,
+        num_classes=6,
         in_channel=64,
         feat_channel=64,
         loss_center_heatmap=dict(type='GaussianFocalLoss', loss_weight=1.0),
@@ -86,23 +86,35 @@ test_pipeline = [
 ]
 
 dataset_type = 'CocoDataset'
-data_root = 'data/coco/'
+data_root = '/home/ubuntu/tienpv/datasets/via-trafficsign-coco/'
+classes = ("stop", "left", "right", "straight", "no_left", "no_right")
 
 # Use RepeatDataset to speed up training
 data = dict(
-    samples_per_gpu=16,
-    workers_per_gpu=4,
+    samples_per_gpu=128,
+    workers_per_gpu=8,
     train=dict(
         _delete_=True,
         type='RepeatDataset',
         times=5,
         dataset=dict(
             type=dataset_type,
-            ann_file=data_root + 'annotations/instances_train2017.json',
-            img_prefix=data_root + 'train2017/',
+            ann_file=data_root + 'annotations/train.json',
+            img_prefix=data_root + 'train/',
+            classes=classes,
             pipeline=train_pipeline)),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
+    val=dict(
+        type=dataset_type,
+        ann_file=data_root + 'annotations/val.json',
+        img_prefix=data_root + 'val/',
+        classes=classes,
+        pipeline=test_pipeline),
+    test=dict(
+        type=dataset_type,
+        ann_file=data_root + 'annotations/val.json',
+        img_prefix=data_root + 'val/',
+        classes=classes,
+        pipeline=test_pipeline))
 
 # optimizer
 # Based on the default settings of modern detectors, the SGD effect is better
@@ -120,3 +132,4 @@ lr_config = dict(
     warmup_ratio=1.0 / 1000,
     step=[18, 24])  # the real step is [18*5, 24*5]
 runner = dict(max_epochs=28)  # the real epoch is 28*5=140
+fp16 = dict(loss_scale=512.)
