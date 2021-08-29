@@ -1,0 +1,1 @@
+python tools/train.py configs/retinanet/multi_r34_fpn_1x_coco.py --work-dir logs/resnet34/multi_logs/

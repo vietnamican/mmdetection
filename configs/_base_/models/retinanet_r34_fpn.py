@@ -10,7 +10,7 @@ model = dict(
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
         style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='/home/ubuntu/tienpv/mmdetection/checkpoints/resnet_34_torchvision_backbone.pth')),
+        init_cfg=dict(type='Pretrained', checkpoint='checkpoints/resnet_34_torchvision_backbone.pth')),
     neck=dict(
         type='FPN',
         in_channels=[64, 128, 256, 512],
@@ -20,7 +20,7 @@ model = dict(
         num_outs=5),
     bbox_head=dict(
         type='RetinaHead',
-        num_classes=1,
+        num_classes=3,
         in_channels=256,
         stacked_convs=4,
         feat_channels=256,

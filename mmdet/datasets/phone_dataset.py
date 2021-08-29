@@ -7,7 +7,7 @@ from .custom import CustomDataset
 
 @DATASETS.register_module()
 class PhoneDataset(CustomDataset):
-    CLASSES = ('phone', )
+    CLASSES = ('phone', 'smoking', 'eating')
 
     def load_annotations(self, ann_file):
         f = open(ann_file,'r')
@@ -44,11 +44,10 @@ class PhoneDataset(CustomDataset):
             else:
                 line = line.split(' ')
                 bbox = [float(x) for x in line]
-                bbox = bbox[:4]
                 bbox[2] += bbox[0]
                 bbox[3] += bbox[1]
-                previous_bboxes.append(bbox)
-                previous_labels.append(0)
+                previous_bboxes.append(bbox[:4])
+                previous_labels.append(bbox[4])
         
         previous_path = path
         if len(previous_bboxes) == 0:
